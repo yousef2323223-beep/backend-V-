@@ -1,0 +1,31 @@
+{
+  "name": "vynorpay-backend",
+  "version": "1.0.0",
+  "description": "VynorPay SaaS POS — Backend API",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start":        "node src/server.js",
+    "dev":          "nodemon src/server.js",
+    "postinstall":  "npx prisma generate",
+    "db:push":      "npx prisma db push",
+    "db:migrate":   "npx prisma migrate deploy",
+    "db:studio":    "npx prisma studio",
+    "db:seed":      "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0",
+    "bcryptjs":       "^2.4.3",
+    "cors":           "^2.8.5",
+    "dotenv":         "^16.4.1",
+    "express":        "^4.18.2",
+    "jsonwebtoken":   "^9.0.2",
+    "morgan":         "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3",
+    "prisma":  "^5.10.0"
+  }
+}

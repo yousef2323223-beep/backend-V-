@@ -1,0 +1,193 @@
+// VynorPay — Prisma Schema
+// Multi-tenant SaaS POS
+// Run: npx prisma db push && npx prisma generate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BusinessType { restaurant retail hotel service cafe }
+enum Plan         { free pro enterprise }
+enum EmployeeRole { admin cashier waiter manager }
+enum SpaceType    { table room seat counter }
+enum SpaceStatus  { free occupied reserved bill cleaning }
+enum SpaceShape   { round square rect }
+enum OrderType    { dine_in takeaway delivery room_service }
+enum OrderStatus  { open paid cancelled refunded }
+enum PaymentMethod{ cash card transfer online }
+enum ResStatus    { pending confirmed seated cancelled no_show }
+
+model Tenant {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String
+  companyName  String
+  businessType BusinessType @default(restaurant)
+  plan         Plan         @default(free)
+  currency     String       @default("EUR")
+  locale       String       @default("de")
+  taxDine      Float        @default(19)
+  taxTakeaway  Float        @default(7)
+  logoUrl      String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  employees    Employee[]
+  categories   Category[]
+  items        Item[]
+  areas        Area[]
+  spaces       Space[]
+  orders       Order[]
+  reservations Reservation[]
+
+  @@map("tenants")
+}
+
+model Employee {
+  id        String       @id @default(uuid())
+  tenantId  String
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  pinHash   String
+  role      EmployeeRole @default(cashier)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  orders    Order[]
+
+  @@map("employees")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  nameDe    String
+  nameEn    String
+  nameAr    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  items     Item[]
+
+  @@map("categories")
+}
+
+model Item {
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  nameDe      String
+  nameEn      String
+  nameAr      String
+  price       Float
+  taxRate     Float     @default(19)
+  barcode     String?
+  stockQty    Int?
+  stockAlert  Int?
+  photoUrl    String?
+  color       String    @default("#5C4B3A")
+  emoji       String    @default("🍽️")
+  modifiers   Json      @default("[]")
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orderItems  OrderItem[]
+
+  @@map("items")
+}
+
+model Area {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int      @default(0)
+  spaces    Space[]
+
+  @@map("areas")
+}
+
+model Space {
+  id        String      @id @default(uuid())
+  tenantId  String
+  tenant    Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  areaId    String?
+  area      Area?       @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  name      String
+  type      SpaceType   @default(table)
+  capacity  Int         @default(4)
+  shape     SpaceShape  @default(round)
+  status    SpaceStatus @default(free)
+  openedAt  DateTime?
+  note      String?
+  orders       Order[]
+  reservations Reservation[]
+
+  @@map("spaces")
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employeeId    String?
+  employee      Employee?     @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  spaceId       String?
+  space         Space?        @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  orderNumber   String
+  orderType     OrderType     @default(dine_in)
+  status        OrderStatus   @default(open)
+  subtotal      Float
+  discountAmt   Float         @default(0)
+  taxAmt        Float
+  taxRate       Float
+  total         Float
+  paymentMethod PaymentMethod @default(cash)
+  customerName  String?
+  customerRef   String?
+  note          String?
+  createdAt     DateTime      @default(now())
+  paidAt        DateTime?
+  items         OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemId    String?
+  item      Item?   @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  itemName  String
+  unitPrice Float
+  quantity  Int
+  modifier  String  @default("")
+  lineTotal Float
+
+  @@map("order_items")
+}
+
+model Reservation {
+  id         String    @id @default(uuid())
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  spaceId    String?
+  space      Space?    @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  guestName  String
+  guestPhone String?
+  guestCount Int       @default(2)
+  reservedAt DateTime
+  notes      String?
+  status     ResStatus @default(pending)
+  createdAt  DateTime  @default(now())
+
+  @@map("reservations")
+}
