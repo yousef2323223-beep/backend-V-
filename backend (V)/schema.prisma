@@ -11,16 +11,84 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum BusinessType { restaurant retail hotel service cafe }
-enum Plan         { free pro enterprise }
-enum EmployeeRole { admin cashier waiter manager }
-enum SpaceType    { table room seat counter }
-enum SpaceStatus  { free occupied reserved bill cleaning }
-enum SpaceShape   { round square rect }
-enum OrderType    { dine_in takeaway delivery room_service }
-enum OrderStatus  { open paid cancelled refunded }
-enum PaymentMethod{ cash card transfer online }
-enum ResStatus    { pending confirmed seated cancelled no_show }
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum BusinessType {
+  restaurant
+  retail
+  hotel
+  service
+  cafe
+}
+
+enum Plan {
+  free
+  pro
+  enterprise
+}
+
+enum EmployeeRole {
+  admin
+  cashier
+  waiter
+  manager
+}
+
+enum SpaceType {
+  table
+  room
+  seat
+  counter
+}
+
+enum SpaceStatus {
+  free
+  occupied
+  reserved
+  bill
+  cleaning
+}
+
+enum SpaceShape {
+  round
+  square
+  rect
+}
+
+enum OrderType {
+  dine_in
+  takeaway
+  delivery
+  room_service
+}
+
+enum OrderStatus {
+  open
+  paid
+  cancelled
+  refunded
+}
+
+enum PaymentMethod {
+  cash
+  card
+  transfer
+  online
+}
+
+enum ResStatus {
+  pending
+  confirmed
+  seated
+  cancelled
+  no_show
+}
+
+// ─────────────────────────────────────────────
+// TENANTS
+// ─────────────────────────────────────────────
 
 model Tenant {
   id           String       @id @default(uuid())
@@ -49,6 +117,10 @@ model Tenant {
   @@map("tenants")
 }
 
+// ─────────────────────────────────────────────
+// EMPLOYEES
+// ─────────────────────────────────────────────
+
 model Employee {
   id        String       @id @default(uuid())
   tenantId  String
@@ -58,10 +130,15 @@ model Employee {
   role      EmployeeRole @default(cashier)
   isActive  Boolean      @default(true)
   createdAt DateTime     @default(now())
+
   orders    Order[]
 
   @@map("employees")
 }
+
+// ─────────────────────────────────────────────
+// CATEGORIES
+// ─────────────────────────────────────────────
 
 model Category {
   id        String   @id @default(uuid())
@@ -72,10 +149,15 @@ model Category {
   nameAr    String
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+
   items     Item[]
 
   @@map("categories")
 }
+
+// ─────────────────────────────────────────────
+// ITEMS
+// ─────────────────────────────────────────────
 
 model Item {
   id          String    @id @default(uuid())
@@ -98,10 +180,15 @@ model Item {
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
   orderItems  OrderItem[]
 
   @@map("items")
 }
+
+// ─────────────────────────────────────────────
+// AREAS
+// ─────────────────────────────────────────────
 
 model Area {
   id        String   @id @default(uuid())
@@ -109,10 +196,15 @@ model Area {
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
   sortOrder Int      @default(0)
+
   spaces    Space[]
 
   @@map("areas")
 }
+
+// ─────────────────────────────────────────────
+// SPACES
+// ─────────────────────────────────────────────
 
 model Space {
   id        String      @id @default(uuid())
@@ -127,11 +219,16 @@ model Space {
   status    SpaceStatus @default(free)
   openedAt  DateTime?
   note      String?
+
   orders       Order[]
   reservations Reservation[]
 
   @@map("spaces")
 }
+
+// ─────────────────────────────────────────────
+// ORDERS
+// ─────────────────────────────────────────────
 
 model Order {
   id            String        @id @default(uuid())
@@ -155,10 +252,15 @@ model Order {
   note          String?
   createdAt     DateTime      @default(now())
   paidAt        DateTime?
+
   items         OrderItem[]
 
   @@map("orders")
 }
+
+// ─────────────────────────────────────────────
+// ORDER ITEMS
+// ─────────────────────────────────────────────
 
 model OrderItem {
   id        String  @id @default(uuid())
@@ -174,6 +276,10 @@ model OrderItem {
 
   @@map("order_items")
 }
+
+// ─────────────────────────────────────────────
+// RESERVATIONS
+// ─────────────────────────────────────────────
 
 model Reservation {
   id         String    @id @default(uuid())
